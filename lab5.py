@@ -111,14 +111,14 @@ class EncoderDecoder(nn.Module):
 在 ys 的第一维上求平均值，得到 avr；
 将 avr 输入全连接层，得到 ret。
 
-This neural network consists of a cyclic neural network layer and a full connection layer:
+This neural network consists of a cyclic neural network layer and a full-connection layer:
 - CNN layer:
 The input dimension of the gated loop unit is input_size(Feature_DIM), which defaults to 2. The hidden layer dimension is hidden_DIM, which defaults to 8. The number of layers is N_layers, which defaults to 3.
-- Full connection layer:
+- Full-connection layer:
 The input dimension is hidden_dim, and the output dimension out_dim defaults to 4.
 Input a three-dimension tensor X (its shape is (sequence_len, batch_size, feature_dim)), x is input into the GRU to obtain the output ys and hidden;
 avr is obtained by averaging the first dimension of YS.
-avr is input into the full connection layer to obtain RET.
+avr is input into the full connection layer to obtain ret.
 '''
 
 '''
