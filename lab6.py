@@ -47,11 +47,11 @@ def textclassificaton(train_data, train_label, test_data, epoch_num):
     return y_pred
 
 """
-训练过程使用随机梯度下降或AdamW或RMSprop作为优化算法，并在GRU和全连接层之间加入了 dropout 层。输入的训练数据为若干形状为 (10,16) 的张量和 one-hot 表示的标签，测试数据为若干形状为 (10,16) 的张量，对测试数据输出包含 0/1 标签的向量。
+训练过程使用随机梯度下降或AdamW或RMSprop作为优化算法，在GRU之前加入BN层，在GRU和全连接层之间加入了 dropout 层。输入的训练数据为若干形状为 (10,16) 的张量和 one-hot 表示的标签，测试数据为若干形状为 (10,16) 的张量，对测试数据输出包含 0/1 标签的向量。
 本模型为使用单层GRU和单层全连接层的二分类神经网络，GRU的输入维度为16维，隐层维度为32维
 dropout的drop率p为0.5，全连接层的输入为GRU输出拼接成的10*32维向量，输出维度为2维
 
-The training process uses SGD or AdamW or RMSprop as optimization algorithms, and a dropout layer is inserted between the GRU and the fully-connected layer. The input training data is a number of tensors with shapes of (10,16) and labels represented by one-hot; the test data is a number of tensors with shapes of (10,16), and the test data is output with vectors containing 0/1 labels.
+The training process uses SGD or AdamW or RMSprop as optimization algorithms, a BN layer is inserted before the GRU and a dropout layer is inserted between the GRU and the fully-connected layer. The input training data is a number of tensors with shapes of (10,16) and labels represented by one-hot; the test data is a number of tensors with shapes of (10,16), and the test data is output with vectors containing 0/1 labels.
 This model is a binary neural network using a single layer GRU and a single layer full connection layer. The input dimension of GRU is 16 dimensions and the hidden dimension is 32 dimensions
 The drop rate of dropout P is 0.5. The input of the full connection layer is a 10*32 dimensional vector spliced by GRU outputs, and the output dimension is 2 dimensions
 '''
@@ -69,6 +69,9 @@ def textc(train_data, train_label, test_data, epoch_num, op='adamw'):
     class Network(nn.Module):
         def __init__(self):
             super(Network, self).__init__()
+            self.bn=nn.Sequential(
+                nn.BatchNorm2d(num_features=10)
+            )
             self.rnn = nn.Sequential(
                 nn.GRU(input_size = 16, hidden_size = 32, num_layers = 3, batch_first=True)
             )
@@ -80,6 +83,9 @@ def textc(train_data, train_label, test_data, epoch_num, op='adamw'):
             )
 
         def forward(self, x):
+            x = x.unsqueeze(2)
+            x = self.bn(x)
+            x = x.squeeze(2)
             x, _ = self.rnn(x)
             output = self.fnn(x)
             return output
