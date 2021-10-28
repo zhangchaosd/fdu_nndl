@@ -105,7 +105,6 @@ def textc(train_data, train_label, test_data, epoch_num, op='adamw'):
     y_pred = torch.argmax(model(test_data), -1)
     return y_pred
 
-from torchtext.datasets import IMDB
 if __name__ == '__main__':
     if False:
         train_data = torch.randn((5,6,12))
