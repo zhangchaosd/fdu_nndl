@@ -91,7 +91,7 @@ def textc(train_data, train_label, test_data, epoch_num, op='adamw'):
             return output
 
     model = Network()
-    criterion = torch.nn.CrossEntropyLoss()#torch.nn.MSELoss(reduction="sum")
+    criterion = torch.nn.MSELoss(reduction="sum")
     if op == 'sgd':
         optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
     elif op=='adamw':
@@ -111,15 +111,9 @@ def textc(train_data, train_label, test_data, epoch_num, op='adamw'):
     y_pred = torch.argmax(model(test_data), -1)
     return y_pred
 
-if __name__ == '__main__':
-    if False:
-        train_data = torch.randn((5,6,12))
-        train_label = torch.zeros((5,2))
-        test_data = torch.randn((3,6,12))
-        epoch_num = 4
-        ret = textclassificaton(train_data, train_label, test_data, epoch_num)
-        print(ret)
 
+
+def zuoye1():
     if True:
         train_data = torch.randn((6,10,16))
         train_label = torch.randn((6,2))
@@ -135,3 +129,88 @@ if __name__ == '__main__':
         epoch_num = 40
         ret = textc(train_data, train_label, test_data, epoch_num, op='pros')
         print(ret)
+
+'''
+训练过程使用AdamW作为优化算法，在训练之前随即对训练图像水平翻转，概率为0.5。
+卷积层的有8个大小为3的卷积核，padding为1，之后接ReLU，再接maxpool层，再接全连接层，输出大小为为2，最后是softmax。
+默认输入的训练数据为（N,C,H,W）,C是3，H和W都是32。
+
+AdamW was used as the optimization algorithm in the training process, and the training image was flipped horizontally before the training with a probability of 0.5.
+In the convolution layer, there are 8 convolution cores with a size of 3, the padding is 1, then ReLU, then MaxPool layer, then full connection layer, the output size is 2, and finally Softmax.
+The default input training data is (N,C,H,W), where C is 3 and H and W are both 32.
+'''
+'''
+train_data = torch.abs(torch.randn((5,3,32,32)))
+train_label = torch.randn((5,2))
+test_data = torch.randn((3,3,32,32))
+epoch_num = 4
+ret = torch.randn((3,))
+'''
+import torch
+import torch.nn as nn
+import torch.version
+from torchvision import transforms
+
+def imagec(train_data, train_label, test_data, epoch_num, op='adamw'):
+    class Network(nn.Module):
+        def __init__(self, channel=3, height=32, width=32, num_kernal=8, c=2):
+            super(Network, self).__init__()
+            self.conv_relu_mp = nn.Sequential(
+                nn.Conv2d(in_channels=channel, out_channels=num_kernal, kernel_size=3, padding=1),
+                nn.ReLU(),
+                nn.MaxPool2d(kernel_size=2)
+            )
+            self.fc = nn.Sequential(
+                nn.Linear(in_features=int(height*width*num_kernal/4), out_features=c),
+                nn.Softmax(dim=1)
+            )
+
+        def forward(self, x):
+            out = self.conv_relu_mp(x)
+            out = torch.flatten(out,start_dim=1)
+            ret = self.fc(out)
+            return ret
+
+    model = Network()
+    criterion = torch.nn.MSELoss(reduction="sum")#CrossEntropyLoss()
+    optimizer = torch.optim.AdamW(model.parameters(), lr=0.001)
+
+    tf = transforms.Compose(
+        [transforms.RandomHorizontalFlip()]
+    )
+    train_data = tf(train_data)
+    for epoch in range(epoch_num):
+        y_pred = model(train_data)
+        loss = criterion(y_pred, train_label)
+        optimizer.zero_grad()
+        print(loss)
+        loss.requires_grad_(True)
+        loss.backward()
+        optimizer.step()
+
+    y_pred = torch.argmax(model(test_data), -1)
+    return y_pred
+def zuoye2():
+    train_data = torch.abs(torch.randn((50,3,32,32)))
+    train_label = torch.randn((50,2))
+    for i in range(train_label.shape[0]):
+        if train_label[i][0]>0:
+            train_label[i][0] = 1
+            train_label[i][1] = 0
+        else:
+            train_label[i][0] = 0
+            train_label[i][1] = 1
+    test_data = torch.randn((3,3,32,32))
+    model = imagec(train_data,train_label,test_data,100)
+    print(model)
+    print("zuoye2 done")
+
+if __name__ == '__main__':
+    if False:
+        train_data = torch.randn((5,6,12))
+        train_label = torch.zeros((5,2))
+        test_data = torch.randn((3,6,12))
+        epoch_num = 4
+        ret = textclassificaton(train_data, train_label, test_data, epoch_num)
+        print(ret)
+    zuoye2()
